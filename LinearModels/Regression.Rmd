@@ -1,0 +1,131 @@
+---
+title: "Linear Regression Appliance Energy Data"
+author: "Yazan Abughazaleh"
+date: "2/13/2023"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+### Introduction
+
+The purpose of this notebook is to demonstrate the basic process of performing linear regression on a data set in R. For this notebook, I have selected the Appliance Energy data set from <https://archive.ics.uci.edu/ml/datasets/Appliances+energy+prediction>. Performing linear regression involves finding the $\hat{w}$ and $\hat{b}$ coefficients for the linear equation: $$ \hat{b} = \bar{y} - \hat{w}\bar{x} $$ The use of this equation allows a target y to be predicted from predictors x, however these predictions only work for quantitative values. The coefficients are the slope and the intercept of a linear equation respectively. Linear regression works best when the data follows a linear pattern and there is low variance in the data. The linear regression algorithm has a high bias because it assumes that the data will fit a linear pattern.
+
+### Data Exploration
+
+The first step in performing linear regression is to perform data exploration to determine whether regression can be performed. The Appliance Energy data is first read into a data frame, which will then be split into a train and test set. We can then look at the structure of the data to identify possible targets and predictors. We are also able to view the dimension of the data frame.
+```{r}
+df <- read.csv("energydata_complete.csv", header = TRUE)
+
+set.seed(3)
+i <- sample(1:nrow(df), nrow(df) * 0.80,replace=FALSE)
+train <-df[i,]
+test <- df[-i,]
+str(train)
+dim(train)
+```
+Next, we can view a summary of the data, which gives us statistics for each attribute in the data set.
+```{r}
+summary(train)
+
+```
+Lastly, we can use the cor() function to find the correlation between a target and its predictors to determine which predictors are best to use for a target. Since the model I want to create is trying to predict appliance energy use. my target is the appliance column in the data, and I am trying to find the best predictors to use. A correlation value which is closest to +1 or -1 is typically the best indicator of which attributes make good predictors. To find the best two predictors in this case, I am using the max and min functions to find the best correlations.
+```{r}
+cor(train[4:27],train[2])
+correl <- cor(train[4:27],train[2])
+max(correl)
+min(correl)
+```
+
+Visualizing the data can be done using the plot function in R.
+
+```{r}
+plot(train$RH_out,train$Appliances ,
+     xlab="Outside Humidity", ylab="Energy Consumption")
+plot(train$T2,train$Appliances , xlab = "Livingroom Temp", ylab = "Energy Consumption")
+```
+
+Above we can see two plots that relate the outside humidity to the appliance energy consumption and the living room temperature to the appliance energy consumption. While there isn't a clear linear correlation in the data, we can still attempt to perform linear regression and evaluate the results. 
+
+### Creating a Model
+
+Now, it is possible to create a simple regression model on the train set of the data. I am using the outside humidity as a predictor for the energy consumption.
+
+```{r}
+lm1 <- lm(train$Appliances~RH_out,data=train)
+summary(lm1)
+```
+Based off of the summary, we can see that the model does not account for the variance in the data as indicated by the very low R-squared value, which typically should be closer to 1. The F statistic however is good in this model, since it is greater that 1 and the associated p value is very low. This means that the predictor of outside humidity is significant in predicting the appliance energy use.
+
+Next, we want to plot the residuals of our model.
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm1)
+```
+ 
+The first plot, "Residuals vs Fitted" helps determine if the data fits a linear relationship or not. The data does not have a good spread around the line but seems to follow the line rather consistently until the end. This seems tho show that the data does not properly fit the linear model. In the "Normal Q-Q" plot, we are looking to see that the residuals are distributed normally. The residuals should closely align with the dashed line. In the plot above, we can see that the residuals line up with the dashed line but then drastically deviate, showing that our residuals are not normally distributed. The "Scale-Location" plot shows a relative concentration of data points on the left side of the graph, which thins out on the right side. This shows that there is a lack of equal variance in the residuals, indicating that the residuals are not evenly spread among predictors. The final plot helps indicate where there are influential data points. Shown in the plot, most data points have a lower leverage meaning removing them will not be very impactful to the model.
+ 
+### Multiple Linear Regression Model
+ 
+Next, we are adding more predictors to our model to determine if it performs better.
+ 
+``` {r}
+lm2 <- lm(train$Appliances~RH_out+T2+T6, data=train)
+summary(lm2)
+```
+```{r}
+par(mfrow=c(2,2))
+plot(lm2)
+```
+```{r}
+#lm3 <- lm(train$Appliances~train$RH_out+train$T2+train$T6+train$Windspeed+train$T_out, data=train)
+lm3 <- lm(log(train$Appliances)~RH_out+T2+T6+Windspeed+T_out, data=train)
+summary(lm3)
+
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm3)
+```
+### Comparing Results.
+
+```{r}
+anova(lm1,lm2)
+```
+Using the analysis of variance function, we can find that model 2 outperforms model 1 with lower RSS and P value. However we know that model 3 is the best performing by looking at the residual plots. The use of the log() in model 3 greatly improved the residuals and the R-squared value.
+
+### Predictions
+
+Here, we are testing the model's prediction capabilities on our test data set. The metrics we are looking at are both correlation and mean squared error, which measures the average of the square of errors in the model.
+
+```{r}
+predict1 <- predict(lm1, newdata = test)
+predict2 <- predict(lm2, newdata = test)
+predict3 <- predict(lm3, newdata = test)
+cor1 <- cor(predict1,test$Appliances)
+mse1 <-mean((predict1 - test$Appliances)^2)
+rmse1 <- sqrt(mse1)
+print(paste('correlation1:', cor1))
+print(paste('mse1:', mse1))
+print(paste('rmse1:', rmse1))
+cor2 <- cor(predict2,test$Appliances)
+mse2 <-mean((predict2 - test$Appliances)^2)
+rmse2 <- sqrt(mse2)
+print(paste('correlation2:', cor2))
+print(paste('mse2:', mse2))
+print(paste('rmse2:', rmse2))
+predict3 <- exp(predict3)
+cor3 <- cor(predict3,test$Appliances)
+mse3 <-mean((predict3 - test$Appliances)^2)
+rmse3 <- sqrt(mse3)
+print(paste('correlation3:', cor3))
+print(paste('mse3:', mse3))
+print(paste('rmse3:', rmse3))
+
+```
+In the three models, we see that there is a noticeable improvement in the correlation of the data as more predictors are added. We want to e a correlation be as close to +1 or -1 as possible. Adding more predictors allows the model to account for more variations that are not accounted for by a lower number of predictors. While the third model did have the best correlation, it suffered in a higher MSE value than the other models indicating a higher presence of errors. Model three however is still better able to fit the data and thus produce better results due to its correlation. In general however, these three models are ineffective at explaining the high variance in the data and produce inaccurate results, indicating that linear regression may not be the best approach for this data set.

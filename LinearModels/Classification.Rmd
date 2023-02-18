@@ -1,0 +1,140 @@
+---
+title: "Classification  Appliance Energy Data"
+author: "Yazan Abughazaleh"
+date: "2/16/2023"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+### Introduction
+
+The purpose of this notebook is to demonstrate the process of performing classification using both logistic regression and Naive Bayes algorithms. The data set I have chosen is the Bank Marketing data set from <https://archive.ics.uci.edu/ml/datasets/Bank+Marketing>. Performing classification involves identifying which class an observation falls into. Linear models in classification divide the binary classes through the use of a boundary line. Classification is used when target variables are qualitative.
+
+### Data Exploration
+
+The first step to performing classification is to do data exploration to better understand our data. We begin by reading in the bank-full.csv file into a data frame and also evaluating the structure.
+```{r}
+df <- read.csv("bank-full.csv", header = TRUE, sep=";")
+str(df)
+```
+We can see that many of our variables above are characters, which we would want to convert into factors.
+
+```{r}
+for(i in 1:ncol(df)){
+  if(is.character(df[,i])){
+    df[,i] <- as.factor(df[,i])
+  }
+}
+```
+
+Next, we want to divide our data into a train and test set.
+
+```{r}
+set.seed(3)
+i <- sample(1:nrow(df), nrow(df) * 0.80,replace=FALSE)
+train <-df[i,]
+test <- df[-i,]
+```
+
+After the data has been split, we can begin exploring our training set. The first thing we would like to identify is the structure of the set.
+
+```{r}
+str(train)
+```
+We can see that all values which should be factors have been properly converted in the set above. To view how many observations we have in the train set, we can use the nrow() function.
+```{r}
+nrow(train)
+```
+
+We can also check how many variables are in the data set with nrow().
+
+```{r}
+ncol(train)
+```
+
+It is also important to make sure we do not have NA's in our data, which we can check with colSums().
+
+```{r}
+colSums(is.na(train))
+```
+Lastly, we can view a summary of our data with summary().
+
+```{r}
+summary(train)
+```
+
+### Visualizing Data
+ We would like to visualize how age affects the creation of a bank account. The graph below shows age related to the opening of an account and shows that it is more common for people to open an account across a wider age group.
+ 
+```{r}
+ boxplot(train$age ~ train$y, data=train, main="Age and Accounts Opened",varWidth=TRUE, ylab="Age",xlab = "Account Opened")
+```
+
+The next plot is a conditional density plot to visualize how the age affects opening a bank account. The lighter portion indicates accounts not opened while the darker portion indicates new accounts opened.
+
+```{r}
+cdplot(train$y~train$age)
+```
+
+### Logistic Regression
+We can now build our logistic regression model using the glm() function.
+
+```{r}
+glm1 <- glm(y~., data=train, family="binomial")
+summary(glm1)
+```
+The summary output of our logistic regression gives us several key measurements. The first statistic we see is the deviance residuals, which quantify a given point in the data's contribution to the overall likelihood. The deviance residuals are a transformation of the loss function, and they can be used to form an RSS-like statistic. The next metrics we see are null deviance and residual deviance. Typically, we would like to see that the residual deviance is significantly lower than the null deviance. Both the null and residual deviance are a measure of how good the model is fit for the data. Now we can look at the AIC, which stands for Akaike Information Criterion and is based on the deviance. AIC is useful in comparing models to each other. A lower AIC is  better and is preferential to models that are less complex with fewer predictors. Lastly, the coefficients quantify the difference in the log odds of our target variable.
+
+### Naive Bayes
+
+To use the Naive Bayes algorithm, we must first import the library package e1071. We can then perform the training of a Naive Bayes model with the NaiveBayes() function. 
+
+```{r}
+library(e1071)
+nb1 <- naiveBayes(y~.,data = train)
+nb1
+```
+The data show is broken down into conditional probabilities for each different attribute. The prior for making a bank account, is called Apriori and is .88 for no and .12 for yes. Discrete variables are output as conditional probabilities, while continuous variables output the man and standard deviation of their classes.
+
+### Evaluating Data
+We now want to use our models to predict and evaluate the test data.
+```{r}
+probs <- predict(glm1,newdata=test, type="response")
+pred <- ifelse(probs>0.5,1,0)
+pred <- as.factor(pred)
+levels(pred) <- list("no"="0","yes"="1")
+levels(test$y) <- list("no"="0","yes"="1")
+acc <- mean(as.integer(pred)==as.integer(test$y))
+print(paste("glm1 accuracy: ", acc))
+```
+
+The above code snippet calculates the accuracy for the logistic regression model. The predicted accuracy is shown as 88% and the error rate is 12%.
+
+We also can output a confusion matrix by using the table() function to show the number of classifications.
+
+```{r}
+library(caret)
+
+confusionMatrix(pred,reference=test$y)
+```
+Here, we have created a confusion matrix for the logistic regression model. The diagonal represents the true positive and true negative values. Next we will be evaluating the data for the Naive Bayes model.
+
+```{r}
+p1 <- predict(nb1, newdata=test, type="class")
+table(p1, test$y)
+mean(p1==test$y)
+```
+The results seem to indicate that the logistic regression model outperformed the Naive Bayes model because the accuracy was higher as well as the count of true positives and true negatives in the confusion matrices. This makes sense because Naive Bayes tends to perform better with smaller data sets and the bank data set is a medium sized set.
+
+### Strengths and Weaknesses
+
+Logistic regression is an ideal choice to use when data can be linearly separated into two classes. It is computationally inexpensive to perform and has easy to use probabilistic outputs. It does however suffer when trying to fit data, as it tends to under-fit the data especially when decision boundaries are non-linear. Naive Bayes is an ideal algorithm to use when working with small data sets. It is easy to use and implement and handles high dimension data very well. Its weaknesses lie in that it is outperformed by other algorithms for larger data sets, and may work poorly if predictors are not independent of each other.
+
+
+### Evaluation Metrics
+
+There are several important metrics to use when evaluating a classification model. Accuracy, sensitivity, specificity, and kappa were all used in this notebook. Accuracy is a measure of the total percentage of correct classifications performed by the model. It does not however give specifics on the true positive and true negative rates in the model. Sensitivity is used as the measure of the true positive rate, while specificity is indicative of the true negative rate. Lastly, kappa is used to help quantify how closely predictors agree with the actual data.
