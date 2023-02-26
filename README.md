@@ -17,3 +17,8 @@ C++ code found [here](DataExploration/DataExploration.cpp)
 
 Linear Models
 An exploration of linear regression, logistic regression, and Naive Bayes algorithms using R notebooks. The linear regression notebook can be found [here](LinearModels/Regression.pdf) while the source can be found [here](LinearModels/Regression.Rmd). The classification using logistic regression and Naive Bayes notebook is located [here](LinearModels/Classification.pdf) while the source may be found [here](LinearModels/Classification.Rmd)
+
+## Portfolio Component 3
+
+C++ Logistic Regression and Naive Bayes
+Two simple programs demonstrating an implementation of Logistic Regression and Naive Bayes. The source code for the Logistic Regression may be found [here](ML_FromScratch/LogRegression.cpp) while the source for Naive Bayes is located [here](ML_FromScratch/NaiveBayes.cpp). An explanation of the output is found [here](NL_FromScratch/ML_Scratch_Explanation.pdf).
