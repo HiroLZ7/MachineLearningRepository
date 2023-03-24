@@ -1,0 +1,139 @@
+---
+title: "PCA and LDA Data Reduction"
+author: 
+- Yazan Abughazaleh YFA190000
+- Umaid Ahmed UXA180002
+- Dinesh Angadipeta DXA190032
+- Waheed Anwar WXA200000
+- Manny Asante EFA190000
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+### Load in the data
+
+In this part, we are loading in the mushroom data set from https://archive.ics.uci.edu/ml/datasets/Mushroom which is a classification data set. The target is whether the mushroom is edible or poisonous and there are 22 available predictors.
+
+```{r}
+msm <- read.csv("mushrooms.csv",header = TRUE)
+library(caret)
+library(dplyr)
+msm2 <- msm
+for(i in 1:ncol(msm)){
+  if(is.character(msm[,i])){
+    msm[,i] <- as.factor(msm[,i])
+    msm2[,i] <- as.factor(msm[,i])
+    msm2[,i] <- as.integer(msm[,i])
+  }
+}
+str(msm)
+str(msm2)
+```
+Now we would like to split our data into a train and test set, and we will use an 80/20 split.
+
+```{r}
+set.seed(3)
+i <- sample(1:nrow(msm), nrow(msm) * 0.80,replace=FALSE)
+train <-msm[i,]
+test <- msm[-i,]
+train2 <-msm2[i,]
+test2 <- msm2[-i,]
+pca_train <- train2[,2:23]
+pca_test <- test2[,2:23]
+```
+
+### Principal Component Analysis (PCA)
+
+Now we can perform PCA on our train data set and evaluate the results. We first want to check is we have any NA values in our data set and remove them.
+```{r}
+sapply(msm, function(x) sum(is.na(x)==TRUE))
+
+```
+Since there are no NA's in the data set, we do not have to do anything to our data set and can jump into performing PCA.
+
+```{r}
+pca_out <- preProcess(train[,2:23],method=c("center","scale","pca"))
+pca_out
+```
+In this attempt at PCA, we can see that all 22 predictors were ignored. This is because PCA can only work on contiguous variables. To work around this issue, categorical variables can be converted to integers, or a technique called Multiple Correspondence Analysis (MCA) will be used.
+
+
+```{r}
+vals <- sapply(pca_train, function(v) var(v, na.rm=TRUE)!=0)
+pca_out <- preProcess(pca_train[,vals],method=c("center","scale","pca"))
+pca_out
+```
+We can see here that converting to integer values has allowed a PCA reduction to 15 predictors.
+
+### PCA Plot
+
+```{r}
+train_pc <- predict(pca_out, train2[, 2:23])
+test_pc <- predict(pca_out, test2[,])
+plot(test_pc$PC1, test_pc$PC2, pch=c(23,21,22)[unclass(test_pc$class)], bg=c("red","green")[unclass(test$class)])
+```
+
+### Comparing Models
+
+```{r}
+train_cl <- train2[,c(1)]
+
+train_pcN <- cbind(train_pc,train_cl)
+train_pcN <- train_pcN %>% rename("class" = "train_cl")
+
+```
+Here we have reattached the class labels to the PCA data set to be able to perform classification. We would like to compare the results of the reduced data set to the original so we will make two classification models.
+```{r}
+glm1 <- glm(class ~., data=train[, sapply(train, nlevels) > 1], family = 'binomial')
+summary(glm1)
+probs <- predict(glm1,newdata=test, type="response")
+pred <- ifelse(probs>0.5,1,0)
+pred <- as.factor(pred)
+levels(pred) <- list("e"="0","p"="1")
+acc <- mean(as.integer(pred)==as.integer(test$class))
+print(paste("glm1 accuracy: ", acc))
+```
+
+Next, we will look at running classification with the PCA reduced data set.
+```{r}
+train_pcN$class <- as.factor(train_pcN$class)
+test_pc$class <- as.factor(test_pc$class)
+str(train_pc)
+glm2 <- glm(class ~., data=train_pcN, family = 'binomial')
+summary(glm2)
+probs_PCA <- predict(glm2,newdata=test_pc, type="response")
+pred_PCA <- ifelse(probs_PCA>0.5,1,0)
+pred_PCA <- as.factor(pred_PCA)
+acc2 <- mean(as.integer(pred_PCA)==test_pc$class)
+print(paste("glm2 accuracy: ", acc2))
+```
+
+Here we see a reduction in accuracy of approximately 9%. The original accuracy shown is at 100%, indicating that the initial logistic regression model was able to perfectly predict the class a mushroom was in with all the given predictors. With the reduced data set, there is a 91% accuracy in predictions which is excellent, but the predictors were reduced.
+
+### Linear Discriminant Analysis
+
+With PCA, the focus is on reducing the number of predictors without regards to the target and class. PCA is a form of unsupervised learning that aims to simplify the data set, however other approaches may be more effective to use. LDA is another data reduction technique that does consider the class of the data when performing a reduction. To start with this, we need to load in the MASS library.
+
+```{r}
+library(MASS)
+lda1 <- lda(class~.,data=train[, sapply(train, nlevels) > 1])
+writeLines("\n")
+lda1$means
+```
+
+After performing LDA, we now would like to test the results.
+
+```{r}
+lda_pred <- predict(lda1, newdata=test, type="class")
+lda_pred$class
+mean(lda_pred$class==test$class)
+```
+
+We can see the results produced by LDA predictions are identical to the results of the original predictions in terms of accuracy.
+
+
