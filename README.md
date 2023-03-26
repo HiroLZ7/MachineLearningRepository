@@ -22,3 +22,8 @@ An exploration of linear regression, logistic regression, and Naive Bayes algori
 
 C++ Logistic Regression and Naive Bayes
 Two simple programs demonstrating an implementation of Logistic Regression and Naive Bayes. The source code for the Logistic Regression may be found [here](ML_FromScratch/LogRegression.cpp) while the source for Naive Bayes is located [here](ML_FromScratch/NaiveBayes.cpp). An explanation of the output is found [here](NL_FromScratch/ML_Scratch_Explanation.pdf).
+
+## Portfolio Component 4
+
+Searching for Similarity Group Project.
+My portion of this project was to work on PCA and LDA data reduction for a classification data set. The R notebook can be found [here](SearchingForSimilarity/PCA_LDA.pdf)
