@@ -25,5 +25,11 @@ Two simple programs demonstrating an implementation of Logistic Regression and N
 
 ## Portfolio Component 4
 
-Searching for Similarity Group Project.
+Searching for Similarity Group Project
 My portion of this project was to work on PCA and LDA data reduction for a classification data set. The R notebook can be found [here](SearchingForSimilarity/PCA_LDA.pdf)
+
+
+## Portfolio Component 5
+
+Machine Learning with SKLearn
+A Jupyter Notebook demonstrating the use of the SKLearn python library to build logistic regression, decision tree, and neural network models. The notebook can be found [here](SKLearn)
