@@ -33,3 +33,8 @@ My portion of this project was to work on PCA and LDA data reduction for a class
 
 Machine Learning with SKLearn
 A Jupyter Notebook demonstrating the use of the SKLearn python library to build logistic regression, decision tree, and neural network models. The notebook can be found [here](SKLearn)
+
+## Portfolio Component 6
+
+Image Classification 
+A Jupyter Notebook demonstrating the usage of Keras and Tensorflow to create an image classifier with three different types of deep neural network models. The architectures used include a sequential model, a convolutional model, and a transfer learning model. The notebook can be found here [here](ImageClassification)
