@@ -38,3 +38,7 @@ A Jupyter Notebook demonstrating the use of the SKLearn python library to build 
 
 Image Classification 
 A Jupyter Notebook demonstrating the usage of Keras and Tensorflow to create an image classifier with three different types of deep neural network models. The architectures used include a sequential model, a convolutional model, and a transfer learning model. The notebook can be found here [here](ImageClassification)
+
+## Final Summary
+
+The opportunity to build this portfolio has allowed me to develop new skills that I would not have been introduced to beforehand. The protfolio is comprised of projects in R, C++, and Python, where I got to learn about many of the basic machine learning algorithms and how to use them to achieve usable results. Being exposed to the projects in this portfolio has inspired me to learn more about how machine learning can be applied to solve different problems. Ideas for future projects include using deep neural networks to try to predict trends in securities markets, and also learning about natural language processing to combine with programming languages. The skills I have been exposed to in this portfolio are Python and R programming, data exploraation and wrangling, and Tensorflow and Keras. I have also gotten to further practice my soft skills which include team work and presentations.
